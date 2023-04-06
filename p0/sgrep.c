@@ -51,8 +51,57 @@ void insertNode(char* arg, struct node** head){
 
 void parse(int c, int n, struct node* p, struct node* f){
     FILE *fptr;
+    char line[250];
+    //char* pre;
+    int i;
+    struct node* temp;
 
-    
+    //printf("%d %d\n", c, n);
+    //printL(p);
+    //printL(f);
+
+    //while there's still files to read
+    while (f != NULL){
+        fptr = fopen(f->val, "r");
+        i = 1;
+
+        //get lines from opened file
+        while (fgets(line, 250, fptr) != NULL){
+            //printf("%d: %s", i, line);
+            /*if (strstr(line, p->val) != NULL){
+                if (n == 1){
+                    printf("%d: ", i);
+                }
+                printf("%s", line);
+            }*/
+            temp = p;
+
+            //while there are still patterns to look for
+            while (temp != NULL){
+                //if the line contains the pattern
+                if (strstr(line, temp->val) != NULL) {
+
+                    //print line number 
+                    if (n == 1) {
+                        printf("%d: ", i);
+                    }
+                    
+                    if (c == 1){
+                        printf(COLOR_CODE "%s" RESET_CODE, temp->val);
+                        printf("%s", strstr(line, temp->val) + strlen(temp->val));
+                    }
+                    else {
+                        printf("%s", line);
+                    }
+
+                }
+                temp = temp->next;
+            }
+            i++;
+        }
+        f = f->next;
+    }
+    fclose(fptr);
 }
 
 int main(int argc, char* argv[]){
@@ -68,8 +117,8 @@ int main(int argc, char* argv[]){
         insertNode(argv[i], &cmd_list);
     }
 
-    printf("command line list nodes: ");
-    printL(cmd_list);
+    //printf("command line list nodes: ");
+    //printL(cmd_list);
     temp = cmd_list;
 
     while (temp != NULL){
@@ -92,13 +141,13 @@ int main(int argc, char* argv[]){
         temp = temp->next;
     }
     
-    printf("(-c: %d,-n: %d)\n", colors, lines);   
+    /*printf("(-c: %d,-n: %d)\n", colors, lines);   
     
     printf("-p: "); 
     printL(patterns);
     
     printf("files: ");
-    printL(files);
+    printL(files);*/
 
     parse(colors, lines, patterns, files);
 
