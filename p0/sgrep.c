@@ -50,10 +50,11 @@ void insertNode(char* arg, struct node** head){
 }
 
 void parse(int c, int n, struct node* p, struct node* f){
-    FILE *fptr;
+    FILE *fptr = NULL;
     char line[250];
+    char* pos;
     //char* pre;
-    int i;
+    int i, index;
     struct node* temp;
 
     //printf("%d %d\n", c, n);
@@ -63,6 +64,10 @@ void parse(int c, int n, struct node* p, struct node* f){
     //while there's still files to read
     while (f != NULL){
         fptr = fopen(f->val, "r");
+        if (fptr == NULL){
+            printf("file unable to be opened\n");
+            exit(1);
+        }
         i = 1;
 
         //get lines from opened file
@@ -87,6 +92,15 @@ void parse(int c, int n, struct node* p, struct node* f){
                     }
                     
                     if (c == 1){
+                        
+                        pos = line;
+                        index = 0;
+
+                        while (pos != strstr(line, temp->val)){
+                            index++;
+                            pos++;
+                        }
+                        printf("%.*s", index, line);
                         printf(COLOR_CODE "%s" RESET_CODE, temp->val);
                         printf("%s", strstr(line, temp->val) + strlen(temp->val));
                     }
