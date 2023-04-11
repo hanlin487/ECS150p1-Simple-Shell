@@ -90,12 +90,13 @@ void parse(int c, int n, struct node* p, struct node* f){
                     if (n == 1) {
                         printf("%d: ", i);
                     }
-                    
+                    //coloring option used
                     if (c == 1){
                         
                         pos = line;
                         index = 0;
 
+                        //find the index at which the pattern word is at within the current line
                         while (pos != strstr(line, temp->val)){
                             index++;
                             pos++;
@@ -162,9 +163,12 @@ int main(int argc, char* argv[]){
     
     printf("files: ");
     printL(files);*/
-
-    parse(colors, lines, patterns, files);
+    if (patterns && files){
+        parse(colors, lines, patterns, files);
+    }
 
     freeL(cmd_list);
+    freeL(files);
+    freeL(patterns);
     return 0;
 }
