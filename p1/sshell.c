@@ -10,12 +10,12 @@
 
 
 struct node {
-    bool read_signal; //If the pipe symbol was before this command, set this to true
-    bool write_signal; //If the pipe symbol was after this command, set this to true; if its sorrounded by pipes set both
-    char* file; //File for output redirect (check parse function to see how its set
-    char** command; //String array representing the command (for execvp)
-    struct node* next; 
-    int length; //length of string array
+    bool read_signal;
+    bool write_signal;
+    char* file;
+    char** command;
+    struct node* next;
+    int length;
 };
 
 //reworking data structures update***
