@@ -48,14 +48,6 @@ char** getCommand(struct node* n){
     return n -> command;
 }
 
-
-
-
-
-
-    
-
-
 struct list {
     struct node* head;
     struct node* tail;
