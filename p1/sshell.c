@@ -308,6 +308,10 @@ int main(){
 			exit(0);
 		    }
 
+			if (strcmp(cmd_2, "pwd") == 0){
+				exit(0);
+			}
+
 		    //point the stdout file descriptor to the redirection file 
 
 		    if (file != NULL){
@@ -327,6 +331,9 @@ int main(){
 			ret = chdir(ds[1]);
 			printf("%s\n",getcwd(buf,100));
 		    }
+			else if (strcmp(cmd_2, "pwd") == 0){
+				printf("%s\n", getcwd(buf, 100));
+			}
  
 		    waitpid(pid, &retval,0);
 		    fprintf(stderr, "Return status value for '%s': %d\n", cmd, WEXITSTATUS(retval));
