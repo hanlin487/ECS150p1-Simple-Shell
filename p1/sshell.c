@@ -106,6 +106,10 @@ void parse(struct node* a, char* string){
     //struct list *l = malloc(sizeof(struct list));
     char temp[CMDLINE_MAX];
     
+    
+
+    
+
 
     
     a -> command = (char**)malloc(16 * sizeof(char *));
@@ -146,15 +150,9 @@ void parse(struct node* a, char* string){
 
 }
 
-//Ignore this
-
-/*
-
-void pipeline(char **a){
-    //you need to loop through all off the piped calls and create processes = to amount of calls
+void read_from_pipe(){
+	
 }
-
-*/
 
     
 
@@ -299,10 +297,6 @@ int main(){
 		    if (strcmp(cmd_2,"cd") == 0){
 			exit(0);
 		    }
-
-			if (strcmp(cmd_2, "pwd") == 0){
-				exit(0);
-			}
 
 		    //point the stdout file descriptor to the redirection file 
 
