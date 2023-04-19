@@ -44,6 +44,10 @@ char** getCommand(struct node* n){
     return n -> command;
 }
 
+char* getFile(struct node* n){
+    return n -> file;
+}
+
 
 
 
@@ -160,6 +164,8 @@ void pipeline(struct list* l){
     pid_t p1;
     int fd[2];
     int prev;
+    char file[32];
+    int output;
     prev = STDIN_FILENO;
 
     front(l);
@@ -178,6 +184,13 @@ void pipeline(struct list* l){
 		close(fd[1]);
 	    }
 	    close(fd[0]);
+	    if (getFile(view(l)) != NULL){
+		strcpy(file,getFile(view(l)));
+                output = open(file, O_WRONLY | O_CREAT, 0644);
+		dup2(output, STDOUT_FILENO);
+		close(output);
+	    }	
+
 	    execvp(command[0],command);
 	    //exit(0);
 	}
@@ -328,6 +341,7 @@ int main(){
 		    strcpy(store_commands[c],ptr);
 		    ptr = strtok(NULL,"|");
 		    c+=1;
+
 		}
 
 		struct list* a = createList();
