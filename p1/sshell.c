@@ -153,6 +153,16 @@ void pipeline(struct list* l){
     for (int i = 0; i < length; i++){
 		pipe(fd);
 		command = getCommand(view(l));
+
+		//exit if command is cd or pwd
+		if (strcmp(command[0], "cd") == 0){
+			exit(0);
+		}
+
+		if (strcmp(command[0], "pwd") == 0){
+			exit(0);
+		}
+
 		p1 = fork();
 
 		if (p1 == 0){
@@ -187,7 +197,7 @@ void pipeline(struct list* l){
 		prev = fd[0];
 		right(l);
     }
-    waitpid(p1, NULL, 0);
+    exit(waitpid(p1, NULL, 0));
 }
 
 //Data structures are kinda complicated-ish but heres an example below of how to use them
@@ -198,7 +208,7 @@ int main(void){
 		char buf[BUF_MAX];
 		char *nl;
 		int retval;
-		int fd;
+		//int fd;
 		pid_t pid;
 		struct node* new = createNode();
 
@@ -263,8 +273,8 @@ int main(void){
 		//declare vars for the commands and lengths and add a NULL to the end
 		//of the array for the cmd and args so it's compatible with execvp
 		char** new_cmd = getCommand(new);
-		int new_len = getLength(new);
-		new_cmd[new_len] = NULL;
+		// int new_len = getLength(new);
+		// new_cmd[new_len] = NULL;
 
 		//fork to start the shell process executions
 		pid = fork();
@@ -273,16 +283,16 @@ int main(void){
 		if (pid == 0){
 			
 			//exit out of child process if commands cannot be executed with execvp
-			if (strcmp(new_cmd[0], "cd") == 0){
-				exit(0);
-			}
+			// if (strcmp(new_cmd[0], "cd") == 0){
+			// 	exit(0);
+			// }
 
-			if (strcmp(new_cmd[0], "pwd") == 0){
-				exit(0);
-			}
+			// if (strcmp(new_cmd[0], "pwd") == 0){
+			// 	exit(0);
+			// }
 
 			//point the stdout file descriptor to the redirection file 
-			if (new -> file != NULL){
+			/*if (new -> file != NULL){
 				fd = open(new -> file ,O_WRONLY | O_CREAT, 0644);
 				dup2(fd, STDOUT_FILENO);
 				close(fd);
@@ -290,7 +300,35 @@ int main(void){
 
 			execvp(new_cmd[0], new_cmd);
 			perror("execvp");
-			exit(1);
+			exit(1);*/
+			char copy_temp[CMDLINE_MAX];
+			char** store_commands = (char**) malloc(16 * sizeof(char*));
+			char* ptr;
+			int c = 0;
+			
+			for (int i = 0; i < 16; i++){
+				store_commands[i] = (char*) malloc(32);
+			}
+
+			strcpy(copy_temp,cmd);
+			ptr = strtok(copy_temp,"|");
+
+			while (ptr != NULL){
+				strcpy(store_commands[c], ptr);
+				ptr = strtok(NULL,"|");
+				c+=1;
+			}
+
+			struct list* a = createList();
+			struct node* n;
+
+			for (int i = 0; i < c; i++){
+				n = createNode();
+				parse(n, store_commands[i]);
+				insert(a, n);
+			}
+
+			pipeline(a);
 		}
 		else if (pid > 0){
 
