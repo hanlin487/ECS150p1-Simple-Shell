@@ -199,9 +199,11 @@ void pipeline(struct list* l){
 	}
 	close(fd[1]);
 	prev = fd[0];
-	waitpid(p1,NULL,0);
+	
 	right(l);
     }
+    waitpid(p1,NULL,0);
+
 
 }
 
