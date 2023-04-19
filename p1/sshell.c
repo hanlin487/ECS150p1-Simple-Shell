@@ -10,8 +10,6 @@
 
 
 struct node {
-    bool read_signal; //If the pipe symbol was before this command, set this to true
-    bool write_signal; //If the pipe symbol was after this command, set this to true; if its sorrounded by pipes set both
     char* file; //File for output redirect (check parse function to see how its set
     char** command; //String array representing the command (for execvp)
     struct node* next; 
@@ -23,8 +21,6 @@ struct node {
 
 struct node* createNode(void){
     struct node *n = malloc(sizeof(struct node));
-    n -> read_signal = false;
-    n -> write_signal = false;
     n -> file = (char*) malloc(32);
     n -> command = (char**) malloc(16*sizeof(char*));
     for (int i = 0; i < 16; i++){
@@ -49,13 +45,6 @@ char** getCommand(struct node* n){
 }
 
 
-bool getWrite(struct node* n){
-    return n -> write_signal;
-}
-
-bool getRead(struct node* n){
-    return n -> read_signal;
-}
 
 
     
@@ -118,13 +107,11 @@ int getLen(struct list* l){
 
 
 
-//Because this parse is a node function I pretty much have to rewrite the strtok code in the main to delimit by "|"
 
 
 void parse(struct node* a, char* string){
 
     
-    //struct list *l = malloc(sizeof(struct list));
     char temp[CMDLINE_MAX];
     
 
@@ -170,88 +157,39 @@ void parse(struct node* a, char* string){
 
 void pipeline(struct list* l){
     int length = getLen(l);
-    //printf("%d",length);
-    pid_t p1, p2;
+    pid_t p1;
     int fd[2];
-    int fd2[2];
+    int prev;
+    prev = STDIN_FILENO;
 
     front(l);
     char** command;
-    int c = 0;
-    while (view(l) != NULL){
-	//printf("hello");
+    for (int i = 0; i < length; i++){
 	pipe(fd);
 	command = getCommand(view(l));
-
 	p1 = fork();
 	if (p1 == 0){
-	    
-	    //First command always has stdinput
-	    if (c == 0){
-		close(fd[0]);
+	    if (prev != STDIN_FILENO){
+		dup2(prev, STDIN_FILENO);
+		close(prev);
+	    }
+	    if (i != length - 1){
 		dup2(fd[1],STDOUT_FILENO);
 		close(fd[1]);
-		execvp(command[0],command);
 	    }
-	    else{
-		dup2(fd2[0],STDIN_FILENO); //Read from second pipe
-		//Last command should go to stdout
-		if (c != length - 1){
-		    dup2(fd[1],STDOUT_FILENO);
-		}
-		close(fd2[0]);
-		close(fd[1]);
-		close(fd[0]);
-		close(fd2[1]);
-		execvp(command[0],command);
-	    }
+	    close(fd[0]);
+	    execvp(command[0],command);
+	    //exit(0);
 	}
-
-	
-	c += 1;
-	printf("%d",c);
-	
-	pipe(fd2);
-	right(l);
-	command = getCommand(view(l));
-	p2 = fork();
-	if (p2 == 0){
-	    //Last command always has stdout, everything else writes to second pipe
-	    if (c == length - 1){
-		close(fd2[0]);
-		close(fd2[1]);
-		close(fd[1]);
-		dup2(fd[0],STDIN_FILENO);
-		close(fd[0]);
-		execvp(command[0],command);
-	    }
-	    else{
-		close(fd[1]);
-		close(fd2[0]);
-		dup2(fd[0],STDIN_FILENO);
-		dup2(fd2[1],STDOUT_FILENO);
-		close(fd[0]);
-		close(fd2[1]);
-		
-		execvp(command[0],command);
-	    }
+	if (prev != STDIN_FILENO){
+	    close(prev);
 	}
-	right(l);
-	c += 1;
-
-
-	
-	close(fd[0]);
 	close(fd[1]);
-	close(fd2[0]);
-	close(fd2[1]);
-	//might be wrong
+	prev = fd[0];
 	waitpid(p1,NULL,0);
-	waitpid(p2,NULL,0);
-	
-
+	right(l);
     }
-    
+
 }
 
 
@@ -402,6 +340,7 @@ int main(){
 		}
 
 		pipeline(a);
+		
 
 
 
