@@ -49,8 +49,13 @@ char** getCommand(struct node* n){
 }
 
 
+bool getWrite(struct node* n){
+    return n -> write_signal;
+}
 
-
+bool getRead(struct node* n){
+    return n -> read_signal;
+}
 
 
     
@@ -60,6 +65,7 @@ struct list {
     struct node* head;
     struct node* tail;
     struct node* curr;
+    int length;
 };
 
 struct list* createList(void){
@@ -67,6 +73,7 @@ struct list* createList(void){
     a -> tail = NULL;
     a -> head = NULL;
     a -> curr = NULL;
+    a -> length = 0;
     return(a);
 }
 
@@ -75,11 +82,13 @@ void insert(struct list* l, struct node* n){
 	l -> tail = n;
 	l -> head = n;
 	n -> next = NULL;
+	l -> length +=1;
 	return;
     }
     l -> tail -> next = n;
     n -> next = NULL;
     l -> tail = n;
+    l -> length +=1;
 }
 
 void front(struct list* l){
@@ -99,6 +108,10 @@ void right(struct list* l){
 
 struct node* view(struct list* l){
     return l -> curr;
+}
+
+int getLen(struct list* l){
+    return l -> length;
 }
 
 
@@ -146,6 +159,7 @@ void parse(struct node* a, char* string){
 	
     }
     a -> length = c;
+    a -> command[c] = '\0';
 
 		
 
@@ -153,6 +167,95 @@ void parse(struct node* a, char* string){
 
 
 }
+
+void pipeline(struct list* l){
+    int length = getLen(l);
+    //printf("%d",length);
+    pid_t p1, p2;
+    int fd[2];
+    int fd2[2];
+
+    front(l);
+    char** command;
+    int c = 0;
+    while (view(l) != NULL){
+	//printf("hello");
+	pipe(fd);
+	command = getCommand(view(l));
+
+	p1 = fork();
+	if (p1 == 0){
+	    
+	    //First command always has stdinput
+	    if (c == 0){
+		close(fd[0]);
+		dup2(fd[1],STDOUT_FILENO);
+		close(fd[1]);
+		execvp(command[0],command);
+	    }
+	    else{
+		dup2(fd2[0],STDIN_FILENO); //Read from second pipe
+		//Last command should go to stdout
+		if (c != length - 1){
+		    dup2(fd[1],STDOUT_FILENO);
+		}
+		close(fd2[0]);
+		close(fd[1]);
+		close(fd[0]);
+		close(fd2[1]);
+		execvp(command[0],command);
+	    }
+	}
+
+	
+	c += 1;
+	printf("%d",c);
+	
+	pipe(fd2);
+	right(l);
+	command = getCommand(view(l));
+	p2 = fork();
+	if (p2 == 0){
+	    //Last command always has stdout, everything else writes to second pipe
+	    if (c == length - 1){
+		close(fd2[0]);
+		close(fd2[1]);
+		close(fd[1]);
+		dup2(fd[0],STDIN_FILENO);
+		close(fd[0]);
+		execvp(command[0],command);
+	    }
+	    else{
+		close(fd[1]);
+		close(fd2[0]);
+		dup2(fd[0],STDIN_FILENO);
+		dup2(fd2[1],STDOUT_FILENO);
+		close(fd[0]);
+		close(fd2[1]);
+		
+		execvp(command[0],command);
+	    }
+	}
+	right(l);
+	c += 1;
+
+
+	
+	close(fd[0]);
+	close(fd[1]);
+	close(fd2[0]);
+	close(fd2[1]);
+	//might be wrong
+	waitpid(p1,NULL,0);
+	waitpid(p2,NULL,0);
+	
+
+    }
+    
+}
+
+
+
 
 //Ignore this
 
@@ -175,7 +278,7 @@ void pipeline(char **a){
 
 int main(){
 
-
+	/*
     	//In an actual terminal this would be inputted as ls -l | more, you could then just delimit the | to get 2 strngs
 	char* string = "ls -l";
 	char* string2 = "more";
@@ -233,8 +336,9 @@ int main(){
 	
 
 	//commented out code is my old main for old data structure I'll just tweak this slightly for new implementation
+	*/
 
-	/*
+	
 
 
         char cmd[CMDLINE_MAX];
@@ -242,8 +346,8 @@ int main(){
 
         while (1) {
                 char *nl;
-                int retval;
-		pid_t pid;
+                //int retval;
+		//pid_t pid;
 
                 //Print prompt 
                 printf("sshell$ ");
@@ -272,20 +376,51 @@ int main(){
 
 		
 
+		char copy_temp[CMDLINE_MAX];
+		char** store_commands = (char**) malloc(16*sizeof(char*));
+		for (int i = 0; i < 16; i++){
+		    store_commands[i] = (char*) malloc(32);
+		}
+
+		char* ptr;
+		int c = 0;
+		strcpy(copy_temp,cmd);
+		ptr = strtok(copy_temp,"|");
+		while (ptr != NULL){
+		    strcpy(store_commands[c],ptr);
+		    ptr = strtok(NULL,"|");
+		    c+=1;
+		}
+
+		struct list* a = createList();
+		struct node* n;
+
+		for (int i = 0; i < c; i++){
+		    n = createNode();
+		    parse(n,store_commands[i]);
+		    insert(a,n);
+		}
+
+		pipeline(a);
+
+
+
 
 		
 
+		
+		    
 
-		struct list* a = parse(cmd);
-		char** ds = getList(a);
-		char* cmd_2 = ds[0];
+		//ignore
+		/*
 		int len = getLength(a);
 		ds[len] = '\0';
 		char* file = getFile(a);
+		*/
 		
 
 		
-		
+		/*
 		int fd;
 	
 		//printf("%s\n",cmd_2);
@@ -344,13 +479,16 @@ int main(){
 
 
 
+		*/
 
 		
         }
 
         return EXIT_SUCCESS;
-	*/
+	
+	    
+	
 
 	
-	    return 0;
+	    
 }
