@@ -348,7 +348,7 @@ int main(void){
 			}
 
 			waitpid(pid, &retval,0);
-			fprintf(stderr, "+ completed '%s'[%d]\n", cmd, WEXITSTATUS(retval));
+			fprintf(stderr, "+ completed '%s' [%d]\n", cmd, WEXITSTATUS(retval));
 		}
 		else{
 			perror("Error:");
