@@ -13,14 +13,7 @@ int main(void){
     char*temp;
     char copy[512];
     
-    if ((ptr = strtok(cmd, "$"))){
-        strcpy(copy, ptr);
-        printf("$ ptr: %s\n", copy);
-    }
-
-    ptr = strtok(NULL, " ");
-    strcpy(copy, ptr);
-    printf("%s\n", copy);
+    
 
     return 0;
 }
