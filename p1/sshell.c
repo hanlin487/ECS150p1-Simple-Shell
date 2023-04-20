@@ -107,6 +107,13 @@ int getLen(struct list* l){
 
 void parse(struct node* n, char* string){
     char temp[CMDLINE_MAX];
+
+	n -> command = (char**) malloc(CMD_ARR_LEN * sizeof(char *));
+
+    for (int i = 0; i < 16; i++){
+		n -> command[i] = (char*) malloc(CMD_LEN);
+    }
+
     strcpy(temp, string);
 
     char* ptr;
@@ -130,8 +137,7 @@ void parse(struct node* n, char* string){
 				break;
 			}
 		}
-
-		strcpy(n -> command[c],ptr);
+		strcpy(n -> command[c], ptr);
 		ptr = strtok(NULL," ");
 		c += 1;
     }
@@ -161,6 +167,10 @@ void pipeline(struct list* l){
 		}
 
 		if (strcmp(command[0], "pwd") == 0){
+			exit(0);
+		}
+
+		if (strcmp(command[0], "set") == 0){
 			exit(0);
 		}
 
@@ -205,6 +215,13 @@ void pipeline(struct list* l){
 
 int main(void){
 	char cmd[CMDLINE_MAX];
+	char* env_vars[26];
+	int ev_index;
+
+	for (int i = 0; i < 26; i++){
+		env_vars[i] = "";
+		printf("env[%d]: %s\n", i, env_vars[i]);
+	}
 
 	while (1) {
 		char buf[BUF_MAX];
@@ -215,7 +232,7 @@ int main(void){
 		struct node* new = createNode();
 
 		//Print prompt 
-		printf("sshell$ ");
+		printf("\nsshell$ ");
 		fflush(stdout);
 
 		//Get command line 
@@ -242,38 +259,66 @@ int main(void){
 		//parse the command line string into the node command object
 		parse(new, cmd);
 		new_cmd = getCommand(new);
+		printf("command: %s\n", new_cmd[0]);
+
+		char copy_temp[CMDLINE_MAX];
+		char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
+		char* ptr;
+		int c = 0;
+		
+		for (int i = 0; i < 16; i++){
+			store_commands[i] = (char*) malloc(CMD_LEN);
+		}
+
+		strcpy(copy_temp,cmd);
+		ptr = strtok(copy_temp,"|");
+
+		while (ptr != NULL){
+			strcpy(store_commands[c], ptr);
+			ptr = strtok(NULL,"|");
+			c+=1;
+		}
+
+		struct list* a = createList();
+		struct node* n;
+
+		for (int i = 0; i < c; i++){
+			n = createNode();
+			parse(n, store_commands[i]);
+			insert(a, n);
+		}
 
 		//fork to start the shell process executions
 		pid = fork();
 
 		//CHILD PROCESS
 		if (pid == 0){
-			char copy_temp[CMDLINE_MAX];
-			char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
-			char* ptr;
-			int c = 0;
+			// char copy_temp[CMDLINE_MAX];
+			// char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
+			// char* ptr;
+			// int c = 0;
 			
-			for (int i = 0; i < 16; i++){
-				store_commands[i] = (char*) malloc(CMD_LEN);
-			}
+			// for (int i = 0; i < 16; i++){
+			// 	store_commands[i] = (char*) malloc(CMD_LEN);
+			// }
 
-			strcpy(copy_temp,cmd);
-			ptr = strtok(copy_temp,"|");
+			// strcpy(copy_temp,cmd);
+			// ptr = strtok(copy_temp,"|");
 
-			while (ptr != NULL){
-				strcpy(store_commands[c], ptr);
-				ptr = strtok(NULL,"|");
-				c+=1;
-			}
+			// while (ptr != NULL){
+			// 	strcpy(store_commands[c], ptr);
+			// 	ptr = strtok(NULL,"|");
+			// 	c+=1;
+			// }
 
-			struct list* a = createList();
-			struct node* n;
+			// struct list* a = createList();
+			// struct node* n;
 
-			for (int i = 0; i < c; i++){
-				n = createNode();
-				parse(n, store_commands[i]);
-				insert(a, n);
-			}
+			// for (int i = 0; i < c; i++){
+			// 	n = createNode();
+			// 	parse(n, store_commands[i]);
+			// 	insert(a, n);
+			// }
 
 			pipeline(a);
 		}
@@ -286,6 +331,20 @@ int main(void){
 			}
 			else if (strcmp(new_cmd[0], "pwd") == 0){
 				printf("%s\n", getcwd(buf, BUF_MAX));
+			}
+			else if (strcmp(new_cmd[0], "set") == 0){
+				ev_index = *new_cmd[1] - 'a';
+				env_vars[ev_index] = new_cmd[2];
+				//printf("stored: %s\n", env_vars[ev_index]);
+			}
+			else if (strstr(new_cmd[0], "$")){
+				char* var;
+
+				for (int i = 0; i < getLength(new); i++){
+					var = strtok(new_cmd[i], "$");
+					ev_index = *var - 'a';
+					printf("%s\n", env_vars[ev_index]);
+				}
 			}
 
 			waitpid(pid, &retval,0);
