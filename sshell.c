@@ -22,6 +22,7 @@ struct node {
     struct node* next; 
     int length; //length of string array
     int parse_error;
+    bool redir;
 };
 
 //make empty node
@@ -37,11 +38,21 @@ struct node* createNode(void){
     n -> next = NULL;
     n -> length = 0;
     n -> parse_error = 0;
+    n -> redir = false;
     
     return(n);
 }
 
 //Accessors and setters for our node data structure
+
+void setRedir(struct node* n){
+    n -> redir = true;
+}
+
+bool getRedir(struct node* n){
+    return n -> redir;
+}
+
 
 void setParse(struct node* n){
     n -> parse_error = 1;
@@ -154,6 +165,7 @@ int parse(struct node* n, char* string, char** env_vars){
     strcpy(temp, string);
 
     char* ptr;
+    //char* prev;
     char ptr2[CMD_LEN];
     int c = 0;
     ptr = strtok(temp, " ");
@@ -164,7 +176,43 @@ int parse(struct node* n, char* string, char** env_vars){
 	    setParse(n);
 	    return 1;
 	}
+	if (strcmp(ptr,">&") == 0){
+
+
+	    ptr = strtok(NULL," ");
+	    if (ptr != NULL){
+		int temp3;
+		temp3 = open(ptr, O_WRONLY | O_CREAT, 0644);
+		if (temp3 == -1){
+		    fprintf(stderr,"Error: cannot open output file\n");
+		    setParse(n);
+		    return 1;
+		}
+		close(temp3);
+		setRedir(n);
+		strcpy(n -> file, ptr);
+		ptr = strtok(NULL, " ");
+		continue;
+	    }
+	    else{
+		n -> file = NULL;
+		fprintf(stderr,"Error: no output file\n");
+		setParse(n);
+		return 1;
+	    }
+	}
+
+
 	
+
+
+
+ 
+
+
+
+
+	    
 	//This is for environment variables, if you see a valid var, the actual command gets altered to the value of the env var
     	if (ptr[0] == '$'){
 	    strcpy(ptr2,ptr+1);
@@ -261,6 +309,11 @@ void pipeline(struct list* l){
 		strcpy(file, getFile(view(l)));
 		output = open(file, O_WRONLY | O_CREAT, 0644);
 		dup2(output, STDOUT_FILENO);
+		if (getRedir(view(l))){
+		    dup2(output, STDERR_FILENO);
+		    fflush(stderr);
+
+		}
 		close(output);
 	    }	
 	    execvp(command[0],command);
@@ -404,11 +457,15 @@ int main(void){
 		    temp = 1;
 		}
 	    }	
+	   
+
 	    pipeline(a);
 	    children = getExit(a);
 
 	    //We print out all of our WEXITSTATUSES here
 	    //Done
+
+	    
 	    
 	    if (built){
 		fprintf(stderr, "+ completed '%s' [%d]\n",cmd, temp);
@@ -419,6 +476,7 @@ int main(void){
 		    fprintf(stderr,"[%d] ",children[i]);				
 		}
 		fprintf(stderr,"\n");
+		
 	    }
 	}
 	return EXIT_SUCCESS;
