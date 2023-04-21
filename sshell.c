@@ -197,12 +197,8 @@ void pipeline(struct list* l){
     
 
     for (int i = 0; i < length; i++){
-		pipe_val = pipe(fd);
+		pipe(fd);
 
-		if (!pipe_val){
-			perror("Piping error\n");
-			exit(1);
-		}
 		command = getCommand(view(l));
 
 		//children[i] = fork();
