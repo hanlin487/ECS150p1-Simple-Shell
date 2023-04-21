@@ -254,10 +254,9 @@ int parse(struct node* n, char* string, char** env_vars){
 }
 
 //Pipeline forks our list of commands into child processes which will execvp the commands and then die
-//To pipe or pass data between the commands we utilize the pipe syscall in a for loop structure where at the end of each iteration the file descriptor that reads from the current pipe is passed to the next iteration to be used as input to second command
-
-
-
+//To pipe or pass data between the commands we utilize the pipe syscall in a for loop structure where 
+//at the end of each iteration the file descriptor that reads from the current pipe is passed to the next 
+//iteration to be used as input to second command
 void pipeline(struct list* l){
     int length = getLen(l);
     int status;
@@ -306,8 +305,6 @@ void pipeline(struct list* l){
 		close(output);
 	    }	
 	    execvp(command[0],command);
-
-
 	    //If execvp doesnt kill child, we know an error happened, we exit(1) to send this as error exit code
 	    fprintf(stderr,"Error: command not found\n");
 	    exit(1);
@@ -453,9 +450,6 @@ int main(void){
 
 	    //We print out all of our WEXITSTATUSES here
 	    //Done
-
-	    
-	    
 	    if (built){
 		fprintf(stderr, "+ completed '%s' [%d]\n",cmd, temp);
 	    }
