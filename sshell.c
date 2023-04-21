@@ -30,6 +30,7 @@ struct node* createNode(void){
     struct node *n = malloc(sizeof(struct node));
     n -> file = (char*) malloc(FILE_LEN);
     n -> command = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
+	
     for (int i = 0; i < CMD_ARR_LEN; i++){
 	n -> command[i] = (char*) malloc(CMD_LEN);
     }
@@ -44,7 +45,6 @@ struct node* createNode(void){
 }
 
 //Accessors and setters for our node data structure
-
 void setRedir(struct node* n){
     n -> redir = true;
 }
@@ -78,8 +78,6 @@ char* getFile(struct node* n){
 //This data structure represents our linked list of node commands
 //The reason we need this is because when you work with multiple piping, you have to store multiple commands not just one
 //EX: ls | sort | grep sshell will be represented as 3 nodes, the execvp arrays that they will be represented as are ["ls"] ["sort"], and ["grep","sshell"]
-
-
 struct list {
     int *children;
     struct node* head;
@@ -159,16 +157,15 @@ int* getExit(struct list* l){
 }
     
 //Parse takes in a string command, and then splits it up delimiting by spaces and stores it inside the node as the command array
-
 int parse(struct node* n, char* string, char** env_vars){
     char temp[CMDLINE_MAX];
     strcpy(temp, string);
 
     char* ptr;
-    //char* prev;
     char ptr2[CMD_LEN];
     int c = 0;
     ptr = strtok(temp, " ");
+	
     while (ptr != NULL){
 	//If your at the argument limit, you essentially error out and return
 	if (c >= CMD_ARR_LEN){
@@ -177,12 +174,12 @@ int parse(struct node* n, char* string, char** env_vars){
 	    return 1;
 	}
 	if (strcmp(ptr,">&") == 0){
-
-
 	    ptr = strtok(NULL," ");
+		
 	    if (ptr != NULL){
 		int temp3;
 		temp3 = open(ptr, O_WRONLY | O_CREAT, 0644);
+		    
 		if (temp3 == -1){
 		    fprintf(stderr,"Error: cannot open output file\n");
 		    setParse(n);
@@ -224,9 +221,11 @@ int parse(struct node* n, char* string, char** env_vars){
 	//Output redirection
 	if (strcmp(ptr, ">") == 0){
 	    ptr = strtok(NULL, " ");
+		
 	    if (ptr != NULL){
 		int temp;
 		temp = open(ptr, O_WRONLY | O_CREAT, 0644);
+		    
 		if (temp == -1){
 		    fprintf(stderr,"Error: cannot open output file\n");
 		    setParse(n);
@@ -297,6 +296,7 @@ void pipeline(struct list* l){
 		strcpy(file, getFile(view(l)));
 		output = open(file, O_WRONLY | O_CREAT, 0644);
 		dup2(output, STDOUT_FILENO);
+		    
 		if (getRedir(view(l))){
 		    dup2(output, STDERR_FILENO);
 		    fflush(stderr);
@@ -370,11 +370,14 @@ int main(void){
 	    char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
 	    char* ptr;
 	    int c = 0;
+		
 	    for (int i = 0; i < 16; i++){
 		store_commands[i] = (char*) malloc(CMD_LEN);
 	    }
+		
 	    strcpy(copy_temp,cmd);
 	    ptr = strtok(copy_temp,"|");
+		
 	    while (ptr != NULL){
 		strcpy(store_commands[c], ptr);
 		ptr = strtok(NULL,"|");
@@ -382,10 +385,12 @@ int main(void){
 	    }
 	    struct list* a = createList();
 	    struct node* n;
+		
 	    for (int i = 0; i < c; i++){
 		n = createNode();
 		parse(n, store_commands[i],env_vars);
 		insert(a, n);
+		    
 		if (getListParse(a) == 1){
 		    break;
 		}
