@@ -187,7 +187,6 @@ void pipeline(struct list* l){
     int fd[2];
     int prev;
     int output;
-	int pipe_val;
     char file[FILE_LEN];
     char** command;
     //pid_t p1;
