@@ -214,7 +214,6 @@ int parse(struct node* n, char* string, char** env_vars){
 void pipeline(struct list* l){
     int length = getLen(l);
     int status;
-    //int children[CMD_ARR_LEN];
     int fd[2];
     int prev;
     int output;
@@ -278,8 +277,7 @@ void pipeline(struct list* l){
 
 	for (int i =0; i <length;i++){
 	    waitpid(l -> children[i],&status,0);
-	    l -> children[i] = WEXITSTATUS(status);
-		    //printf("%d\n",l->children[i]);    
+	    l -> children[i] = WEXITSTATUS(status); 
 	}
 }
 
