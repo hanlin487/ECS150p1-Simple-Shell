@@ -302,7 +302,7 @@ int main(void){
 			//built-in commands
 			if (strcmp(new_cmd[0], "cd") == 0){
 				chdir(new_cmd[1]);
-				printf("%s\n", getcwd(buf, BUF_MAX));
+				//printf("%s\n", getcwd(buf, BUF_MAX));
 			}
 			else if (strcmp(new_cmd[0], "pwd") == 0){
 				printf("%s\n", getcwd(buf, BUF_MAX));
