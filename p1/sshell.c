@@ -17,9 +17,9 @@
 struct node {
     char* file; 			//File for output redirect (check parse function to see how its set
     char** command; 		//String array representing the command (for execvp)
-    struct node* next;
-    int exit; 
-    int length; 			//length of string array
+    struct node* next; 
+    int length;     //length of string array
+    int parse_error;
 };
 
 //make empty node
@@ -35,9 +35,19 @@ struct node* createNode(void){
     n -> file = (char*) malloc(FILE_LEN);
     n -> next = NULL;
     n -> length = 0;
-    n -> exit = 0;
+    n -> parse_error = 0;
+    
     return(n);
 }
+
+void setParse(struct node* n){
+    n -> parse_error = 1;
+}
+
+int getParse(struct node* n){
+    return n -> parse_error;
+}
+    
 
 int getLength(struct node* n){
     return n -> length;
@@ -51,15 +61,15 @@ char* getFile(struct node* n){
     return n -> file;
 }
 
-int getExit(struct node* n){
-    return n -> exit;
-}
+
 
 struct list {
+    int *children;
     struct node* head;
     struct node* tail;
     struct node* curr;
     int length;
+    int parse;
 };
 
 //make empty list
@@ -69,12 +79,26 @@ struct list* createList(void){
     l -> head = NULL;
     l -> curr = NULL;
     l -> length = 0;
+    l -> children = malloc(CMD_ARR_LEN * sizeof(int));
+    l -> parse = 0;
 	
     return(l);
 }
 
+void setListParse(struct list* l){
+    l -> parse = 1;
+}
+
+int getListParse(struct list* l){
+    return l -> parse;
+}
+
 void insert(struct list* l, struct node* n){
-	if (l -> tail == NULL){
+    if (getParse(n) == 1){
+	setListParse(l);
+    }
+
+    if (l -> tail == NULL){
 		l -> tail = n;
 		l -> head = n;
 		n -> next = NULL;
@@ -113,7 +137,12 @@ int getLen(struct list* l){
     return l -> length;
 }
 
-void parse(struct node* n, char* string, char** env_vars){
+int* getExit(struct list* l){
+    return l -> children;
+}
+    
+
+int parse(struct node* n, char* string, char** env_vars){
     char temp[CMDLINE_MAX];
     strcpy(temp, string);
 
@@ -125,6 +154,7 @@ void parse(struct node* n, char* string, char** env_vars){
 	while (ptr != NULL){
 		if (c >= CMD_ARR_LEN){
 		    fprintf(stderr,"Error: too many process arguments\n");
+		    setParse(n);
 		    break;
 		}
 
@@ -134,6 +164,22 @@ void parse(struct node* n, char* string, char** env_vars){
 		    strcpy(ptr2,ptr+1);
 
 		    if (ptr2 != NULL){
+<<<<<<< HEAD
+=======
+			if (strlen(ptr2) == 1 && islower(*ptr2)){
+			    strcpy(n -> command[c],env_vars[*ptr2 - 'a']);
+			    ptr = strtok(NULL, " ");
+			    c += 1;
+			    continue;
+			}
+			else{
+			    fprintf(stderr,"Error: invalid variable name\n");
+			    setParse(n);
+			    return 1;
+			    
+			}
+		    }
+>>>>>>> origin/nilesh
 
 				if (strlen(ptr2) == 1 && islower(*ptr2)){
 					strcpy(n -> command[c], env_vars[*ptr2 - 'a']);
@@ -157,8 +203,9 @@ void parse(struct node* n, char* string, char** env_vars){
 				temp = open(ptr, O_WRONLY | O_CREAT, 0644);
 			
 				if (temp == -1){
-				    fprintf(stderr,"Error: cannot open output file");
-				    exit(1);
+				    fprintf(stderr,"Error: cannot open output file\n");
+				    setParse(n);
+				    return 1;
 				}
 
 				close(temp);
@@ -169,7 +216,8 @@ void parse(struct node* n, char* string, char** env_vars){
 			else{
 				n -> file = NULL;
 				fprintf(stderr,"Error: no output file\n");
-				exit(1);
+				setParse(n);
+				return 1;
 			}
 		}
 		strcpy(n -> command[c],ptr);
@@ -178,12 +226,13 @@ void parse(struct node* n, char* string, char** env_vars){
     }
     n -> length = c;
     n -> command[c] = '\0';
+    return 0;
 }
 
 void pipeline(struct list* l){
     int length = getLen(l);
     int status;
-    int children[CMD_ARR_LEN];
+    //int children[CMD_ARR_LEN];
     int fd[2];
     int prev;
     int output;
@@ -203,19 +252,19 @@ void pipeline(struct list* l){
 
 		//exit if command is cd or pwd
 		if (strcmp(command[0], "cd") == 0){
-			exit(0);
+			return;
 		}
 
 		if (strcmp(command[0], "pwd") == 0){
-			exit(0);
+			return;
 		}
 
 		if (strcmp(command[0], "set") == 0){
-		        exit(0);
+		        return;
 		}
-		children[i] = fork();
+		l -> children[i] = fork();
 
-		if (children[i] == 0){
+		if (l -> children[i] == 0){
 			if (prev != STDIN_FILENO){
 				dup2(prev, STDIN_FILENO);
 				close(prev);
@@ -254,15 +303,46 @@ void pipeline(struct list* l){
 		right(l);
     }
 		for (int i =0; i <length;i++){
+<<<<<<< HEAD
 		    waitpid(children[i],&status,0);
+=======
+		    waitpid(l -> children[i],&status,0);
+		    l -> children[i] = WEXITSTATUS(status);
+		    //printf("%d\n",l->children[i]);
+		    
+
+>>>>>>> origin/nilesh
 		    //REPLACE CURRENT VALS WITH WEXITSTATUS AND RETURN THE ARRAY/PRINT IN MAIN
 		    // printf("%d\n",WEXITSTATUS(status));
 		}
+<<<<<<< HEAD
 		exit(0);
+=======
+		//exit(0);
+
+		/*
+
+		if (prev != STDIN_FILENO){
+			close(prev);
+		}
+
+
+
+		close(fd[1]);
+		prev = fd[0];
+		right(l);
+		*/
+		
+		
+    
+    //while(wait(NULL)>0);
+    //exit(waitpid(p1, NULL, 0));
+>>>>>>> origin/nilesh
 }
 
 int main(void){
 	char cmd[CMDLINE_MAX]; 
+	int* children;
         char* env_vars[26];
         int ev_index;
 
@@ -274,8 +354,14 @@ int main(void){
 		char buf[BUF_MAX];
 		char *nl;
 		char** new_cmd;
+<<<<<<< HEAD
 		int retval;
 		pid_t pid;
+=======
+		//int retval;
+		//pid_t pid;
+		//struct node* new = createNode();
+>>>>>>> origin/nilesh
 
 		//Print prompt 
 		printf("sshell$ ");
@@ -329,6 +415,13 @@ int main(void){
 			n = createNode();
 			parse(n, store_commands[i],env_vars);
 			insert(a, n);
+			if (getListParse(a) == 1){
+			    break;
+			}
+		}
+		
+		if (getListParse(a) == 1){
+		    continue;
 		}
 
 		if (getLen(a) == 0){
@@ -338,13 +431,22 @@ int main(void){
 		new_cmd = getCommand(view(a));
   
 		//fork to start the shell process executions
-		pid = fork();
+		//pid = fork();
 
 		//CHILD PROCESS
+<<<<<<< HEAD
 		if (pid == 0){  
 			pipeline(a);
 		}
 		else if (pid > 0){
+=======
+		//if (pid == 0){
+		        
+			//pipeline(a);
+			
+		//}
+		//else if (pid > 0){
+>>>>>>> origin/nilesh
 
 		    	int temp;
 			bool built = false;
@@ -359,6 +461,11 @@ int main(void){
 				else{
 				    temp = 0;
 				}
+<<<<<<< HEAD
+=======
+
+				//printf("%s\n", getcwd(buf, BUF_MAX));
+>>>>>>> origin/nilesh
 			}
 			else if (strcmp(new_cmd[0], "pwd") == 0){
 				built = true;
@@ -367,6 +474,7 @@ int main(void){
 			}
 
 			//add errors here
+<<<<<<< HEAD
         	else if (strcmp(new_cmd[0], "set") == 0){
 				ev_index = *new_cmd[1] - 'a';
 				env_vars[ev_index] = new_cmd[2];
@@ -378,11 +486,62 @@ int main(void){
 			}else{
 			    fprintf(stderr, "+ completed '%s' [%d]\n", cmd, temp);
 			}
+=======
+
+                        else if (strcmp(new_cmd[0], "set") == 0){
+			        built = true;
+			    	if (getLength(view(a)) == 1){
+				    fprintf(stderr,"Error: invalid variable name\n");
+				    temp = 1;
+				}
+				else if (islower(*new_cmd[1])){
+				    if (strlen(new_cmd[1]) == 1){
+					ev_index = *new_cmd[1] - 'a';
+					env_vars[ev_index] = new_cmd[2];
+					//printf("stored: %s\n", env_vars[ev_index]);
+					temp = 0;
+				    }
+				    else{
+					fprintf(stderr,"Error: invalid variable name\n");
+					temp = 1;
+				    }
+				}
+				else{
+				    fprintf(stderr,"Error: invalid variable name\n");
+				    temp = 1;
+				}
+
+
+			}
+			
+			pipeline(a);
+			//waitpid(pid, &retval,0);
+			children = getExit(a);
+			//printf("%d\n",children[1]);
+			if (built){
+			    fprintf(stderr, "+ completed '%s' [%d]\n",cmd,temp);
+			}else{
+			    fprintf(stderr, "+ completed '%s' ", cmd);
+			    for (int i = 0 ; i < getLen(a); i++){
+				fprintf(stderr,"[%d] ",children[i]);
+				
+			    }
+			    fprintf(stderr,"\n");
+			}
+
+			/*
+			while(view(a) != NULL){
+			    if (getExit(view(a)) != 0){
+			*/
+			
+		/*
+>>>>>>> origin/nilesh
 		}
 		else{
 			perror("Error:");
 			exit(1);
 		}
+		*/
 	}
     return EXIT_SUCCESS;
 }
