@@ -202,17 +202,6 @@ int parse(struct node* n, char* string, char** env_vars){
 	    }
 	}
 
-
-	
-
-
-
- 
-
-
-
-
-	    
 	//This is for environment variables, if you see a valid var, the actual command gets altered to the value of the env var
     	if (ptr[0] == '$'){
 	    strcpy(ptr2,ptr+1);
