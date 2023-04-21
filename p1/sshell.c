@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <sys/stat.h>
 
 #define CMDLINE_MAX 512
 #define BUF_MAX 100
@@ -15,7 +17,8 @@
 struct node {
     char* file; 			//File for output redirect (check parse function to see how its set
     char** command; 		//String array representing the command (for execvp)
-    struct node* next; 
+    struct node* next;
+    int exit; 
     int length; 			//length of string array
 };
 
@@ -32,6 +35,7 @@ struct node* createNode(void){
     n -> file = (char*) malloc(FILE_LEN);
     n -> next = NULL;
     n -> length = 0;
+    n -> exit = 0;
     return(n);
 }
 
@@ -45,6 +49,10 @@ char** getCommand(struct node* n){
 
 char* getFile(struct node* n){
     return n -> file;
+}
+
+int getExit(struct node* n){
+    return n -> exit;
 }
 
 struct list {
@@ -105,39 +113,88 @@ int getLen(struct list* l){
     return l -> length;
 }
 
-void parse(struct node* n, char* string){
+void parse(struct node* n, char* string, char** env_vars){
     char temp[CMDLINE_MAX];
-
-	n -> command = (char**) malloc(CMD_ARR_LEN * sizeof(char *));
-
-    for (int i = 0; i < 16; i++){
-		n -> command[i] = (char*) malloc(CMD_LEN);
-    }
-
     strcpy(temp, string);
 
     char* ptr;
+    char ptr2[CMD_LEN];
     int c = 0;
     ptr = strtok(temp, " ");
     
 	while (ptr != NULL){
+	    	
 
+	    	if (c >= CMD_ARR_LEN){
+		    fprintf(stderr,"Error: too many process arguments\n");
+		    break;
+		}
 		//if output redirection used then set file variable of node object to 
 		//output destination
+
+
+
+
+	    	if (ptr[0] == '$'){
+		    
+			
+		    
+
+
+
+		    strcpy(ptr2,ptr+1);
+		    
+		    
+
+		    if (ptr2 != NULL){
+			if (strlen(ptr2) == 1 && islower(*ptr2)){
+			    strcpy(n -> command[c],env_vars[*ptr2 - 'a']);
+			    ptr = strtok(NULL, " ");
+			    c += 1;
+			    continue;
+			}
+			else{
+			    fprintf(stderr,"Error: invalid variable name");
+			    exit(0);
+			}
+		    }
+
+		    
+		
+			    
+		    
+		    
+		    
+		}
+		//add one more if for case where its like world>file
 		if (strcmp(ptr, ">") == 0){
 			ptr = strtok(NULL, " ");
 
 			if (ptr != NULL){
+			    	int temp;
+				temp = open(ptr, O_WRONLY | O_CREAT, 0644);
+				
+
+			
+				if (temp == -1){
+				    fprintf(stderr,"Error: cannot open output file");
+				    exit(1);
+				}
+				close(temp);
 				strcpy(n -> file, ptr);
 				ptr = strtok(NULL, " ");
 				continue;
 			}
 			else{
 				n -> file = NULL;
-				break;
+				fprintf(stderr,"Error: no output file\n");
+				exit(1);
 			}
 		}
-		strcpy(n -> command[c], ptr);
+
+		
+
+		strcpy(n -> command[c],ptr);
 		ptr = strtok(NULL," ");
 		c += 1;
     }
@@ -147,19 +204,24 @@ void parse(struct node* n, char* string){
 
 void pipeline(struct list* l){
     int length = getLen(l);
+    int status;
+    int children[CMD_ARR_LEN];
     int fd[2];
     int prev;
     int output;
     char file[FILE_LEN];
     char** command;
-    pid_t p1;
+    //pid_t p1;
 
     prev = STDIN_FILENO;
     front(l);
+    
 
     for (int i = 0; i < length; i++){
 		pipe(fd);
 		command = getCommand(view(l));
+
+		//children[i] = fork();
 
 		//exit if command is cd or pwd
 		if (strcmp(command[0], "cd") == 0){
@@ -171,12 +233,11 @@ void pipeline(struct list* l){
 		}
 
 		if (strcmp(command[0], "set") == 0){
-			exit(0);
+		        exit(0);
 		}
+		children[i] = fork();
 
-		p1 = fork();
-
-		if (p1 == 0){
+		if (children[i] == 0){
 			if (prev != STDIN_FILENO){
 				dup2(prev, STDIN_FILENO);
 				close(prev);
@@ -191,46 +252,78 @@ void pipeline(struct list* l){
 			
 			if (getFile(view(l)) != NULL){
 				strcpy(file, getFile(view(l)));
+				output = open(file, O_WRONLY | O_CREAT, 0644);
 				
-                output = open(file, O_WRONLY | O_CREAT, 0644);
+
 				dup2(output, STDOUT_FILENO);
+				
 
 				close(output);
 			}	
 
 			execvp(command[0],command);
-			//exit(0);
+			fprintf(stderr,"Error: command not found\n");
+
+			exit(1);
 		}
 
 		if (prev != STDIN_FILENO){
 			close(prev);
 		}
 
+
+
 		close(fd[1]);
 		prev = fd[0];
 		right(l);
+    
+	
+
     }
-    waitpid(p1, NULL, 0);
-	exit(0);
+		for (int i =0; i <length;i++){
+		    waitpid(children[i],&status,0);
+		    printf("%d\n",WEXITSTATUS(status));
+		    //REPLACE CURRENT VALS WITH WEXITSTATUS AND RETURN THE ARRAY/PRINT IN MAIN
+		    
+		    
+		}
+		exit(0);
+
+		/*
+
+		if (prev != STDIN_FILENO){
+			close(prev);
+		}
+
+
+
+		close(fd[1]);
+		prev = fd[0];
+		right(l);
+		*/
+		
+		
+    
+    //while(wait(NULL)>0);
+    //exit(waitpid(p1, NULL, 0));
 }
 
 int main(void){
-	char cmd[CMDLINE_MAX];
-	char* env_vars[26];
-	int ev_index;
+	char cmd[CMDLINE_MAX]; 
+        char* env_vars[26];
+        int ev_index;
 
-	for (int i = 0; i < 26; i++){
-		env_vars[i] = "";
-		//printf("env[%d]: %s\n", i, env_vars[i]);
-	}
-
+        for (int i = 0; i < 26; i++){
+                env_vars[i] = "";
+        }
 	while (1) {
+	 
 		char buf[BUF_MAX];
 		char *nl;
 		char** new_cmd;
 		int retval;
 		pid_t pid;
-		struct node* new = createNode();
+		//struct node* new = createNode();
 
 		//Print prompt 
 		printf("sshell$ ");
@@ -254,16 +347,22 @@ int main(void){
 		//Builtin command 
 		if (!strcmp(cmd, "exit")) {
 			fprintf(stderr, "Bye...\n");
-			fprintf(stderr, "+ completed 'exit' [0]\n");
 			break;
 		}
+
 
 		//parse the command line string into the node command object
 		parse(new, cmd);
 		new_cmd = getCommand(new);
 		//printf("command: %s\n", new_cmd[0]);
 
-		char copy_temp[CMDLINE_MAX];
+		//parse the command line string into the node command object
+		
+		for (int i = 0; i < 16; i++){
+			store_commands[i] = (char*) malloc(CMD_LEN);
+		}
+
+                char copy_temp[CMDLINE_MAX];
 		char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
 		char* ptr;
 		int c = 0;
@@ -276,54 +375,84 @@ int main(void){
 		ptr = strtok(copy_temp,"|");
 
 		while (ptr != NULL){
+		        //printf("%s\n",ptr);
 			strcpy(store_commands[c], ptr);
 			ptr = strtok(NULL,"|");
 			c+=1;
 		}
+
+		//exit(0);
 
 		struct list* a = createList();
 		struct node* n;
 
 		for (int i = 0; i < c; i++){
 			n = createNode();
-			parse(n, store_commands[i]);
+			parse(n, store_commands[i],env_vars);
 			insert(a, n);
 		}
+
+		if (getLen(a) == 0){
+		    continue;
+		}
+		front(a);
+		new_cmd = getCommand(view(a));
+  
 
 		//fork to start the shell process executions
 		pid = fork();
 
 		//CHILD PROCESS
 		if (pid == 0){
+		        
 			pipeline(a);
 		}
 		else if (pid > 0){
 
+		    	int temp;
+			bool built = false;
+
 			//built-in commands
 			if (strcmp(new_cmd[0], "cd") == 0){
-				chdir(new_cmd[1]);
-				//printf("%s\n", getcwd(buf, BUF_MAX));
-			}
-			else if (strcmp(new_cmd[0], "pwd") == 0){
+			        built = true;
+			        if (chdir(new_cmd[1]) != 0){
+				    fprintf(stderr,"Error: cannot cd into directory\n");
+				    temp = 1;
+
+				}
+				else{
+				    temp = 0;
+				}
+
 				printf("%s\n", getcwd(buf, BUF_MAX));
 			}
-			else if (strcmp(new_cmd[0], "set") == 0){
+			else if (strcmp(new_cmd[0], "pwd") == 0){
+			        built = true;
+				temp = 0;
+				printf("%s\n", getcwd(buf, BUF_MAX));
+			}
+
+			//add errors here
+
+                        else if (strcmp(new_cmd[0], "set") == 0){
 				ev_index = *new_cmd[1] - 'a';
 				env_vars[ev_index] = new_cmd[2];
-				//printf("stored: %s\n", env_vars[ev_index]);
+				printf("stored: %s\n", env_vars[ev_index]);
 			}
-			else if (strstr(new_cmd[0], "$")){
-				char* var;
+			
 
-				for (int i = 0; i < getLength(new); i++){
-					var = strtok(new_cmd[i], "$");
-					ev_index = *var - 'a';
-					printf("%s\n", env_vars[ev_index]);
-				}
+			waitpid(pid, &retval,0);
+			if (built){
+			    fprintf(stderr, "+ completed '%s' [%d]\n",cmd,temp);
+			}else{
+			    fprintf(stderr, "+ completed '%s' \n", cmd);
 			}
+			/*
+			while(view(a) != NULL){
+			    if (getExit(view(a)) != 0){
+			*/
+			
 
-			waitpid(pid, &retval, 0);
-			fprintf(stderr, "+ completed '%s' [%d]\n", cmd, retval);
 		}
 		else{
 			perror("Error:");
@@ -332,3 +461,4 @@ int main(void){
 	}
     return EXIT_SUCCESS;
 }
+
