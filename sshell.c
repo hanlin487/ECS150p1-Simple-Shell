@@ -187,6 +187,7 @@ void pipeline(struct list* l){
     int fd[2];
     int prev;
     int output;
+	int pipe_val;
     char file[FILE_LEN];
     char** command;
     //pid_t p1;
@@ -196,7 +197,12 @@ void pipeline(struct list* l){
     
 
     for (int i = 0; i < length; i++){
-		pipe(fd);
+		pipe_val = pipe(fd);
+
+		if (!pipe_val){
+			perror("Piping error\n");
+			exit(1);
+		}
 		command = getCommand(view(l));
 
 		//children[i] = fork();
@@ -273,6 +279,7 @@ int main(void){
 	 
 		char buf[BUF_MAX];
 		char *nl;
+		char* eof;
 		char** new_cmd;
 		int retval;
 		pid_t pid;
@@ -282,7 +289,11 @@ int main(void){
 		fflush(stdout);
 
 		//Get command line 
-		fgets(cmd, CMDLINE_MAX, stdin);
+		eof = fgets(cmd, CMDLINE_MAX, stdin);
+
+		if (!eof){
+			strncpy(cmd, "exit\n", CMDLINE_MAX);
+		}
 
 		//Print command line if stdin is not provided by terminal 
 		if (!isatty(STDIN_FILENO)) {
