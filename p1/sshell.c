@@ -120,6 +120,7 @@ void parse(struct node* n, char* string, char** env_vars){
     char* ptr;
     char ptr2[CMD_LEN];
     int c = 0;
+	int count = 0;
     ptr = strtok(temp, " ");
     
 	while (ptr != NULL){
@@ -150,6 +151,12 @@ void parse(struct node* n, char* string, char** env_vars){
 
 		//add one more if for case where its like world>file
 		if (strcmp(ptr, ">") == 0){
+			count++;
+			if (n -> length < count){
+				fprintf(stderr, "Error: missing command\n");
+				exit(1);
+			}
+			
 			ptr = strtok(NULL, " ");
 
 			if (ptr != NULL){
