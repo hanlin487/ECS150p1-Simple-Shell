@@ -359,8 +359,6 @@ int main(void){
 				else{
 				    temp = 0;
 				}
-
-				printf("%s\n", getcwd(buf, BUF_MAX));
 			}
 			else if (strcmp(new_cmd[0], "pwd") == 0){
 				built = true;
