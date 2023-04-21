@@ -289,11 +289,7 @@ int main(void){
 		fflush(stdout);
 
 		//Get command line 
-		eof = fgets(cmd, CMDLINE_MAX, stdin);
-
-		if (!eof){
-			strncpy(cmd, "exit\n", CMDLINE_MAX);
-		}
+		fgets(cmd, CMDLINE_MAX, stdin);
 
 		//Print command line if stdin is not provided by terminal 
 		if (!isatty(STDIN_FILENO)) {
