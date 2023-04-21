@@ -1,5 +1,5 @@
-#Project 1
-##Command Data Structure Design
+# Project 1
+## Command Data Structure Design
 We implemented the command data structures by focusing on storing the arguments needed for the `execvp()` functions first which is the command and the string array of the command and the command arguments. This is done by simply storing the commands in the string array `command` that is in the `node` struct
 The commands also serve as nodes in the linked list similar to how the commands are stored in project0.
 However we also made a `list` struct that would have all the nodes inside it and this struct would act as the entire linked list that the nodes will be stored inside. The list doesn't really serve much of a purpose other than to contain the nodes/commands that the user will input
