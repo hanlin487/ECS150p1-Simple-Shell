@@ -120,7 +120,6 @@ void parse(struct node* n, char* string, char** env_vars){
     char* ptr;
     char ptr2[CMD_LEN];
     int c = 0;
-	int count = 0;
     ptr = strtok(temp, " ");
     
 	while (ptr != NULL){
@@ -151,12 +150,6 @@ void parse(struct node* n, char* string, char** env_vars){
 
 		//add one more if for case where its like world>file
 		if (strcmp(ptr, ">") == 0){
-			count++;
-			if (n -> length < count){
-				fprintf(stderr, "Error: missing command\n");
-				exit(1);
-			}
-			
 			ptr = strtok(NULL, " ");
 
 			if (ptr != NULL){
@@ -203,14 +196,7 @@ void pipeline(struct list* l){
     
 
     for (int i = 0; i < length; i++){
-		int pipe_val;
-
-		pipe_val = pipe(fd);
-
-		if (!pipe_val){
-			perror("Pipe error\n");
-			exit(1);
-		}
+		pipe(fd);
 		command = getCommand(view(l));
 
 		//children[i] = fork();
@@ -288,7 +274,6 @@ int main(void){
 		char buf[BUF_MAX];
 		char *nl;
 		char** new_cmd;
-		char* eof;
 		int retval;
 		pid_t pid;
 
@@ -297,11 +282,7 @@ int main(void){
 		fflush(stdout);
 
 		//Get command line 
-		eof = fgets(cmd, CMDLINE_MAX, stdin);
-
-		if (!eof){
-			strncpy(cmd, "exit\n", CMDLINE_MAX);
-		}
+		fgets(cmd, CMDLINE_MAX, stdin);
 
 		//Print command line if stdin is not provided by terminal 
 		if (!isatty(STDIN_FILENO)) {
@@ -378,8 +359,6 @@ int main(void){
 				else{
 				    temp = 0;
 				}
-
-				printf("%s\n", getcwd(buf, BUF_MAX));
 			}
 			else if (strcmp(new_cmd[0], "pwd") == 0){
 				built = true;
