@@ -27,9 +27,8 @@ struct node* createNode(void){
     struct node *n = malloc(sizeof(struct node));
     n -> file = (char*) malloc(FILE_LEN);
     n -> command = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
-	
-	for (int i = 0; i < CMD_ARR_LEN; i++){
-		n -> command[i] = (char*) malloc(CMD_LEN);
+    for (int i = 0; i < CMD_ARR_LEN; i++){
+	n -> command[i] = (char*) malloc(CMD_LEN);
     }
 
     n -> file = (char*) malloc(FILE_LEN);
