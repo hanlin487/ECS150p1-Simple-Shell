@@ -279,7 +279,6 @@ int main(void){
 	 
 		char buf[BUF_MAX];
 		char *nl;
-		char* eof;
 		char** new_cmd;
 		int retval;
 		pid_t pid;
