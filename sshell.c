@@ -210,7 +210,8 @@ void pipeline(struct list* l){
 		prev = fd[0];
 		right(l);
     }
-    exit(waitpid(p1, NULL, 0));
+    waitpid(p1, NULL, 0);
+	exit(0);
 }
 
 int main(void){
@@ -220,7 +221,7 @@ int main(void){
 
 	for (int i = 0; i < 26; i++){
 		env_vars[i] = "";
-		printf("env[%d]: %s\n", i, env_vars[i]);
+		//printf("env[%d]: %s\n", i, env_vars[i]);
 	}
 
 	while (1) {
@@ -232,7 +233,7 @@ int main(void){
 		struct node* new = createNode();
 
 		//Print prompt 
-		printf("\nsshell$ ");
+		printf("sshell$ ");
 		fflush(stdout);
 
 		//Get command line 
@@ -253,13 +254,14 @@ int main(void){
 		//Builtin command 
 		if (!strcmp(cmd, "exit")) {
 			fprintf(stderr, "Bye...\n");
+			fprintf(stderr, "+ completed 'exit' [0]\n");
 			break;
 		}
 
 		//parse the command line string into the node command object
 		parse(new, cmd);
 		new_cmd = getCommand(new);
-		printf("command: %s\n", new_cmd[0]);
+		//printf("command: %s\n", new_cmd[0]);
 
 		char copy_temp[CMDLINE_MAX];
 		char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
@@ -293,33 +295,6 @@ int main(void){
 
 		//CHILD PROCESS
 		if (pid == 0){
-			// char copy_temp[CMDLINE_MAX];
-			// char** store_commands = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
-			// char* ptr;
-			// int c = 0;
-			
-			// for (int i = 0; i < 16; i++){
-			// 	store_commands[i] = (char*) malloc(CMD_LEN);
-			// }
-
-			// strcpy(copy_temp,cmd);
-			// ptr = strtok(copy_temp,"|");
-
-			// while (ptr != NULL){
-			// 	strcpy(store_commands[c], ptr);
-			// 	ptr = strtok(NULL,"|");
-			// 	c+=1;
-			// }
-
-			// struct list* a = createList();
-			// struct node* n;
-
-			// for (int i = 0; i < c; i++){
-			// 	n = createNode();
-			// 	parse(n, store_commands[i]);
-			// 	insert(a, n);
-			// }
-
 			pipeline(a);
 		}
 		else if (pid > 0){
@@ -347,8 +322,8 @@ int main(void){
 				}
 			}
 
-			waitpid(pid, &retval,0);
-			fprintf(stderr, "+ completed '%s' [%d]\n", cmd, WEXITSTATUS(retval));
+			waitpid(pid, &retval, 0);
+			fprintf(stderr, "+ completed '%s' [%d]\n", cmd, retval);
 		}
 		else{
 			perror("Error:");

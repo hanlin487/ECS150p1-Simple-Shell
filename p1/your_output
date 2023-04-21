@@ -1,0 +1,5 @@
+sshell$ echo Hello
+Hello
++ completed 'echo Hello' [72]
+sshell$ exit
+Bye...
