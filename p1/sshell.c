@@ -164,8 +164,6 @@ int parse(struct node* n, char* string, char** env_vars){
 		    strcpy(ptr2,ptr+1);
 
 		    if (ptr2 != NULL){
-<<<<<<< HEAD
-=======
 			if (strlen(ptr2) == 1 && islower(*ptr2)){
 			    strcpy(n -> command[c],env_vars[*ptr2 - 'a']);
 			    ptr = strtok(NULL, " ");
@@ -179,7 +177,6 @@ int parse(struct node* n, char* string, char** env_vars){
 			    
 			}
 		    }
->>>>>>> origin/nilesh
 
 				if (strlen(ptr2) == 1 && islower(*ptr2)){
 					strcpy(n -> command[c], env_vars[*ptr2 - 'a']);
@@ -303,21 +300,14 @@ void pipeline(struct list* l){
 		right(l);
     }
 		for (int i =0; i <length;i++){
-<<<<<<< HEAD
-		    waitpid(children[i],&status,0);
-=======
 		    waitpid(l -> children[i],&status,0);
 		    l -> children[i] = WEXITSTATUS(status);
 		    //printf("%d\n",l->children[i]);
 		    
 
->>>>>>> origin/nilesh
 		    //REPLACE CURRENT VALS WITH WEXITSTATUS AND RETURN THE ARRAY/PRINT IN MAIN
 		    // printf("%d\n",WEXITSTATUS(status));
 		}
-<<<<<<< HEAD
-		exit(0);
-=======
 		//exit(0);
 
 		/*
@@ -337,7 +327,6 @@ void pipeline(struct list* l){
     
     //while(wait(NULL)>0);
     //exit(waitpid(p1, NULL, 0));
->>>>>>> origin/nilesh
 }
 
 int main(void){
@@ -354,14 +343,9 @@ int main(void){
 		char buf[BUF_MAX];
 		char *nl;
 		char** new_cmd;
-<<<<<<< HEAD
-		int retval;
-		pid_t pid;
-=======
 		//int retval;
 		//pid_t pid;
 		//struct node* new = createNode();
->>>>>>> origin/nilesh
 
 		//Print prompt 
 		printf("sshell$ ");
@@ -434,19 +418,12 @@ int main(void){
 		//pid = fork();
 
 		//CHILD PROCESS
-<<<<<<< HEAD
-		if (pid == 0){  
-			pipeline(a);
-		}
-		else if (pid > 0){
-=======
 		//if (pid == 0){
 		        
 			//pipeline(a);
 			
 		//}
 		//else if (pid > 0){
->>>>>>> origin/nilesh
 
 		    	int temp;
 			bool built = false;
@@ -461,11 +438,8 @@ int main(void){
 				else{
 				    temp = 0;
 				}
-<<<<<<< HEAD
-=======
 
 				//printf("%s\n", getcwd(buf, BUF_MAX));
->>>>>>> origin/nilesh
 			}
 			else if (strcmp(new_cmd[0], "pwd") == 0){
 				built = true;
@@ -474,19 +448,6 @@ int main(void){
 			}
 
 			//add errors here
-<<<<<<< HEAD
-        	else if (strcmp(new_cmd[0], "set") == 0){
-				ev_index = *new_cmd[1] - 'a';
-				env_vars[ev_index] = new_cmd[2];
-			}
-			
-			waitpid(pid, &retval,0);
-			if (built){
-			    fprintf(stderr, "+ completed '%s' [%d]\n",cmd,temp);
-			}else{
-			    fprintf(stderr, "+ completed '%s' [%d]\n", cmd, temp);
-			}
-=======
 
                         else if (strcmp(new_cmd[0], "set") == 0){
 			        built = true;
@@ -535,7 +496,6 @@ int main(void){
 			*/
 			
 		/*
->>>>>>> origin/nilesh
 		}
 		else{
 			perror("Error:");
