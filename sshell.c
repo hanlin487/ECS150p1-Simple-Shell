@@ -418,7 +418,7 @@ int main(void){
 		    fprintf(stderr, "+ completed '%s' [%d]\n",cmd, temp);
 		}
 		else{
-		    fprintf(stderr, "+ completed '%s' [%d]\n", cmd, temp);
+		    fprintf(stderr, "+ completed '%s' ", cmd);
 	
 		    for (int i = 0 ; i < getLen(a); i++){
 				fprintf(stderr,"[%d] ",children[i]);				
