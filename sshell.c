@@ -27,8 +27,13 @@ struct node* createNode(void){
     struct node *n = malloc(sizeof(struct node));
     n -> file = (char*) malloc(FILE_LEN);
     n -> command = (char**) malloc(CMD_ARR_LEN * sizeof(char*));
+<<<<<<< HEAD
 
     for (int i = 0; i < CMD_ARR_LEN; i++){
+=======
+	
+	for (int i = 0; i < CMD_ARR_LEN; i++){
+>>>>>>> faa527aeed9ceb4d7eafca2171e65c3a572425c6
 		n -> command[i] = (char*) malloc(CMD_LEN);
     }
 
@@ -283,12 +288,12 @@ void pipeline(struct list* l){
 int main(void){
 	char cmd[CMDLINE_MAX]; 
 	int* children;
-        char* env_vars[26];
-        int ev_index;
+	char* env_vars[26];
+	int ev_index;
 
-        for (int i = 0; i < 26; i++){
-        	env_vars[i] = "";
-        }
+	for (int i = 0; i < 26; i++){
+		env_vars[i] = "";
+	}
 
 	while (1) {
 		char buf[BUF_MAX];
